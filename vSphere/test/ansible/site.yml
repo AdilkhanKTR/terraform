@@ -1,0 +1,5 @@
+---
+
+- hosts: terra_ansible_host
+  roles:
+    - base

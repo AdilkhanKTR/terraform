@@ -1,0 +1,55 @@
+---
+
+- name: stat golang archive
+  stat:
+    path: /tmp/go1.13.5.linux-amd64.tar.gz
+  register: golang_stat
+
+- name: Download and unarchive golang
+  unarchive:
+    src: https://dl.google.com/go/go1.13.5.linux-amd64.tar.gz
+    dest: /usr/local
+    remote_src: yes
+  when: golang_stat.stat.exists == False
+
+- block:
+
+  - name: Checking golang folders
+    stat:
+      path: "{{item}}"
+    register: folder_stats
+    with_items:
+      - ["/root/go_projects/bin","/root/go_projects/src","/root/go_projects/pkg"]
+  
+  - name: Create golang directory
+    file:
+      path: "{{ item.item }}"
+      state: directory
+      mode: 0755
+      group: root
+      owner: root
+    when: item.stat.exists == false
+    with_items:
+      - "{{ folder_stats.results }}"
+
+- name: Add PATH to profile
+  lineinfile:
+    path: /etc/profile
+    regexp: "^export PATH="
+    line: export PATH=$PATH:/usr/local/go/bin
+
+- name: Add GOPATH to profile
+  lineinfile:
+    path: /etc/profile
+    regexp: "^export GOPATH"
+    line: export GOPATH="$HOME/go_projects"
+
+- name: Add GOBIN to profile
+  lineinfile:
+    path: /etc/profile
+    regexp: "^export GOBIN"
+    line: export GOBIN="$GOPATH/bin"
+
+- name: Reboot server
+  reboot:
+    reboot_timeout: 3600

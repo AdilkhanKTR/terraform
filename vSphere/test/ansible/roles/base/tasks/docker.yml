@@ -1,0 +1,48 @@
+---
+
+- name: Install required packages
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+
+- name: Add Docker repository
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install docker tools
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+- name: Enable ipv4 forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+
+- name: Start and enable docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Download docker-compose binary
+  command: curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  args:
+    creates: /usr/local/bin/docker-compose
+
+- name: Set docker-compose binary executable
+  file:
+    path: /usr/local/bin/docker-compose
+    mode: '777'
+
+  

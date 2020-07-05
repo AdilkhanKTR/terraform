@@ -1,0 +1,48 @@
+---
+
+- name: Install a basic list of packages for vim
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - ctags
+      - tcl-devel
+      - python
+      - python-devel
+      - ncurses
+      - ncurses-devel
+
+- name: Remove the default vim packages
+  yum:
+    name: "{{ packages }}"
+    state: absent
+  vars:
+    packages:
+      - vim-minimal
+      - vim-common
+      - vim-enhanced
+
+- name: Clone vim repo git
+  git:
+    repo: https://github.com/vim/vim.git
+    dest: /tmp/vim
+
+- name: Running ./configure for vim
+  command: "{{ item }}"
+  args:
+    chdir: /tmp/vim/
+  with_items:
+      - ./configure --with-features=huge --enable-multibyte --enable-pythoninterp
+
+- name: Running make for vim
+  command: "{{ item }}"
+  args:
+    chdir: /tmp/vim/
+    creates: /tmp/vim/src/vim
+  with_items:
+      - make
+
+- name: Running "make install" for vim
+  command: make install
+  args:
+    chdir: /tmp/vim/

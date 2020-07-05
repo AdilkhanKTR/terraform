@@ -1,0 +1,22 @@
+---
+
+- name: be sure chrony is installed
+  yum:
+    name: chrony
+    state: present
+
+- name: be sure chronyd is running and enabled
+  service:
+    name: chronyd
+    state: started
+    enabled: yes
+
+- name: Run timedatectl status
+  command: /usr/bin/timedatectl status
+  changed_when: False
+  check_mode: no
+  register: timedatectl_result
+
+- name: Enable ntp
+  command: /usr/bin/timedatectl set-ntp truea
+  when: "'Network time on: no' in timedatectl_result.stdout"

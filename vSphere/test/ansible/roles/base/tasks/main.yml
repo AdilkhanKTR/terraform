@@ -1,0 +1,61 @@
+---
+
+- name: Disable selinux
+  selinux:
+    state: disabled
+
+- name: Include chrony task
+  include_tasks: chrony.yml
+
+
+- name: Change hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Update and upgrade all
+  yum:
+    name: "*"
+    state: latest
+
+- name: Install epel-release repo
+  yum:
+    name: epel-release
+    state: latest
+
+- name: Install a basic list of packages
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - wget
+      - sudo 
+      - bash-completion
+      - vim
+      - htop
+      - net-tools
+      - yum-utils
+      - python3.x86_64
+      - git
+      
+- name: Install Development Tools
+  yum:
+    name: "@Development Tools"
+    state: present
+
+- name: Grep bash color PS1 in /etc/bashrc
+  shell: grep "^PS1=" /etc/bashrc
+  register: grep_output
+  ignore_errors: true
+
+- name: Add terminal coloring to bashrc
+  shell: echo 'export PS1="\[\033[36m\]\u\[\033[m\]@\[\033[32m\] \[\033[33;1m\]\w\[\033[m\] (\$(git branch 2>/dev/null | grep "^*" | colrm 1 2)) \$ "' >> /etc/bashrc
+  when: grep_output.stdout == ""
+
+  #- name: Include docker task
+  #include_tasks: docker.yml
+
+  #- name: Include golang task
+  #include_tasks: golang.yml
+
+ 
+ 
